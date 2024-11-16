@@ -1,0 +1,13 @@
+{
+  "name": "microservice-v1",
+  "version": "1.0.0",
+  "description": "Low CPU and memory usage microservice",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "prom-client": "^15.1.3"
+  }
+}

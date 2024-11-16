@@ -1,0 +1,32 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: microservice-v2
+  labels:
+    app: microservice-v2
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: microservice-v2
+  template:
+    metadata:
+      labels:
+        app: microservice-v2
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "8082"
+        prometheus.io/path: "/metrics"
+    spec:
+      containers:
+        - name: microservice-v2
+          image: koonzte/microservice-v2:latest
+          ports:
+            - containerPort: 8082
+          resources:
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+            requests:
+              memory: "256Mi"
+              cpu: "250m"
