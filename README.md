@@ -1,4 +1,4 @@
-# Simple Node.js Kubernetes Microservice Monitoring via Prometheus by Alper Celik
+# Simple Node.js Kubernetes Microservice Monitoring via Prometheus
 
 ## Setup
 
@@ -99,7 +99,10 @@ Use the following queries to monitor your microservices:
    ```
 
 ---
+### **Example Usage**
+![Nov-16-2024 21-43-16](https://github.com/user-attachments/assets/3068a8ff-8909-4563-87c5-d47c76977054)
 
+---
 ### **Troubleshooting**
 
 If you encounter issues:
