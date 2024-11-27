@@ -11,41 +11,66 @@ Ensure you have the following installed:
 - Prometheus
 - Node.js and npm (for development)
 
-### **Before You Begin**
+### **Before You Begin**  
 
-- Replace Docker user names (e.g., "koonzte") with your own Docker Hub username in the provided files.
+- Replace Docker user names (e.g., "koonzte") with your own Docker Hub username in the provided files.  
+- If you're using Docker Desktop for Kubernetes, ensure Kubernetes is enabled in the Docker Desktop settings.  
 
 ---
 
-### **Step 1: Build and Push Docker Images**
+### **Step 1: Build and Push Docker Images**  
 
-1. Build Docker images for `microservice-v1` and `microservice-v2`:
+1. Pull or build Docker images for `microservice-v1` and `microservice-v2`:  
 
    ```bash
-   docker build -t <your-docker-username>/microservice-v1:latest .
-   docker build -t <your-docker-username>/microservice-v2:latest .
+   docker pull koonzte/microservice-v1:latest
+   docker pull koonzte/microservice-v2:latest
    ```
 
-2. Push Docker images to Docker Hub:
+   OR, If you'd like to build them locally, you can use:  
+
    ```bash
-   docker push <your-docker-username>/microservice-v1:latest
-   docker push <your-docker-username>/microservice-v2:latest
+   docker build -t <your-docker-username>/microservice-v1:latest ./microservice-v1
+   docker build -t <your-docker-username>/microservice-v2:latest ./microservice-v2
+   ```  
+
+2. Push Docker images to Docker Hub (if built locally):  
+   ```bash
+   docker push <your-docker-username>/microservice-v1:latest  
+   docker push <your-docker-username>/microservice-v2:latest  
    ```
 
 ---
 
 ### **Step 2: Deploy Kubernetes Resources**
 
-Apply the following Kubernetes manifests in order:
+Apply the following Kubernetes manifests:
 
-1. Deploy `microservice-v1` and `microservice-v2`:
+1. **Create the Monitoring Namespace:**  
+   ```bash
+   kubectl create namespace monitoring  
+   ```
+
+2. Deploy `microservice-v1` and `microservice-v2`:
 
    ```bash
    kubectl apply -f deployment-v1.yaml
    kubectl apply -f deployment-v2.yaml
    ```
 
-2. Deploy Prometheus configuration:
+3. **Deploy Prometheus Using Helm:**  
+   Add the Helm chart repository:  
+   ```bash
+   helm repo add prometheus-community https://prometheus-community.github.io/helm-charts  
+   helm repo update  
+   ```
+
+   Deploy Prometheus with the following command:  
+   ```bash
+   helm install prometheus prometheus-community/prometheus -n monitoring --create-namespace  
+   ```
+
+4. (Optional):: Deploy Prometheus configuration:
 
    ```bash
    kubectl apply -f prometheus-config.yaml
@@ -53,7 +78,12 @@ Apply the following Kubernetes manifests in order:
    kubectl apply -f prometheus-rbac.yaml
    ```
 
-3. Expose services:
+5. **Verify All Pods Are Running:**  
+   ```bash
+   kubectl get pods -n monitoring
+   ```
+
+6. Expose services:
    ```bash
    kubectl apply -f service-v1.yaml
    kubectl apply -f service-v2.yaml
@@ -67,7 +97,7 @@ Apply the following Kubernetes manifests in order:
 Forward the Prometheus port to access the Prometheus UI locally:
 
 ```bash
-kubectl port-forward deployment/prometheus-server 9090:9090
+kubectl port-forward -n monitoring deployment/prometheus-server 9090:9090
 ```
 
 ---
@@ -81,19 +111,20 @@ kubectl port-forward deployment/prometheus-server 9090:9090
 2. Check the targets:
    - [http://localhost:9090/targets?pool=kubernetes-pods&search=](http://localhost:9090/targets?pool=kubernetes-pods&search=)
 
+3. Confirm that your `microservice-v1` and `microservice-v2` endpoints are listed under `kubernetes-pods`
+
 ---
 
-### **Prometheus Queries**
+### **Prometheus Queries**  
 
-Use the following queries to monitor your microservices:
+Use the following queries to monitor your microservices:  
 
-1. **CPU Usage**:
-
+1. **CPU Usage:**  
    ```promql
    sum(rate(container_cpu_usage_seconds_total{namespace="default"}[5m])) by (pod)
    ```
 
-2. **Memory Usage**:
+2. **Memory Usage:**  
    ```promql
    sum(container_memory_usage_bytes{namespace="default"}) by (pod)
    ```
@@ -103,25 +134,44 @@ Use the following queries to monitor your microservices:
 ![Nov-16-2024 21-43-16](https://github.com/user-attachments/assets/3068a8ff-8909-4563-87c5-d47c76977054)
 
 ---
-### **Troubleshooting**
+### **Troubleshooting**  
 
-If you encounter issues:
-
-1. Verify the Prometheus configuration file syntax.
-2. Check logs for any errors in the Prometheus pod:
-
+1. **Check Helm Installation:**  
+   If Prometheus fails to deploy, verify the Helm installation:  
    ```bash
-   kubectl logs deployment/prometheus-server
+   helm list -n monitoring  
    ```
 
-3. Ensure your microservices are correctly exposing `/metrics` endpoints:
-
+2. **Inspect Prometheus Pods:**  
+   Check the logs of the Prometheus pods to troubleshoot issues:  
    ```bash
-   curl http://<service-ip>:<service-port>/metrics
+   kubectl logs -n monitoring deployment/prometheus-server  
    ```
 
-4. Confirm Kubernetes annotations are set for scraping Prometheus metrics.
+3. **Node Exporter Issues:**  
+   If the Node Exporter is in `CrashLoopBackOff`, inspect its logs:  
+   ```bash
+   kubectl logs -n monitoring daemonset/prometheus-prometheus-node-exporter  
+   ```
+
+4. **Verify Microservices Metrics Endpoint:**  
+   Ensure `/metrics` endpoints of `microservice-v1` and `microservice-v2` are accessible:  
+   ```bash
+   curl http://<service-ip>:<service-port>/metrics  
+   ```
+
+5. **Port Forwarding Issues:**  
+   If you cannot forward the Prometheus port, confirm the correct deployment name:  
+   ```bash
+   kubectl get deployments -n monitoring  
+   ```
+
+6. **Update Context:**  
+   Ensure you are using the correct Kubernetes context:  
+   ```bash
+   kubectl config current-context  
+   ```
 
 ---
 
-Enjoy monitoring your microservices with Prometheus!
+Enjoy monitoring your microservices with Prometheus 🎉!
