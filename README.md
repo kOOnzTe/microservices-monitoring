@@ -1,5 +1,5 @@
-# Simple Node.js Kubernetes Microservice Monitoring via Prometheus
-
+# The simplest Node.js Kubernetes Microservice Monitoring via Prometheus
+```Disclaimer: the focus is only monitoring a kubernetes system, NOT the structure of the microservices.```
 ## Setup
 
 ### **Prerequisites**
